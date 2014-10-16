@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30723.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wildling.Core", "Wildling.Core\Wildling.Core.csproj", "{6A2F27E1-6113-4D05-A9DB-CB86939DE9AF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wildling.Core.Tests", "Wildling.Core.Tests\Wildling.Core.Tests.csproj", "{0FC3B671-52E6-4353-ACCA-0840D5FF8F63}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wildling.Server", "Wildling.Server\Wildling.Server.csproj", "{8F9E7CD2-737D-416C-80D5-70B792E7693A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6A2F27E1-6113-4D05-A9DB-CB86939DE9AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A2F27E1-6113-4D05-A9DB-CB86939DE9AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A2F27E1-6113-4D05-A9DB-CB86939DE9AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A2F27E1-6113-4D05-A9DB-CB86939DE9AF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0FC3B671-52E6-4353-ACCA-0840D5FF8F63}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0FC3B671-52E6-4353-ACCA-0840D5FF8F63}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0FC3B671-52E6-4353-ACCA-0840D5FF8F63}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0FC3B671-52E6-4353-ACCA-0840D5FF8F63}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F9E7CD2-737D-416C-80D5-70B792E7693A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F9E7CD2-737D-416C-80D5-70B792E7693A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F9E7CD2-737D-416C-80D5-70B792E7693A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F9E7CD2-737D-416C-80D5-70B792E7693A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
