@@ -21,13 +21,19 @@ namespace Wildling.Core.Tests.Extensions
         }
 
         [Test]
-        public void Shift_should_throw_when_list_is_empty()
+        public void Shift_should_return_null_when_string_list_is_empty()
+        {
+            IList<string> list = new string[0];
+            string result = list.Shift();
+            result.Should().BeNull();
+        }
+
+        [Test]
+        public void Shift_should_return_null_when_int_list_is_empty()
         {
             IList<int> list = new int[0];
-
-            Action action = () => list.Shift();
-
-            action.ShouldThrow<ArgumentOutOfRangeException>();
+            int result = list.Shift();
+            result.Should().Be(0);
         }
 
         [Test]
