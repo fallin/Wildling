@@ -69,12 +69,13 @@
     <Compile Include="Configuration.cs" />
     <Compile Include="HashRange.cs" />
     <Compile Include="Extensions\ListExtensions.cs" />
-    <Compile Include="Extensions\NodeExtensions.cs" />
+    <Compile Include="IRemoteNodeClient.cs" />
     <Compile Include="PartitionedConsistentHash.cs" />
     <Compile Include="Node.cs" />
     <Compile Include="NodeObject.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Range.cs" />
+    <Compile Include="RemoteNodeClient.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

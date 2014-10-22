@@ -38,10 +38,11 @@ namespace Wildling.Core.Tests
             IEnumerable<string> nodes = new CharRange('A', 'J').ToStrings();
             var ch = new PartitionedConsistentHash(nodes, 32);
 
-            string[] preferenceList = ch.PreferenceList("foo", 3);
+            string node = ch.Node("foo");
+            node.Should().Be("G");
 
-            preferenceList.Should().HaveCount(3);
-            Console.WriteLine(string.Join(",", preferenceList));
+            var preferenceList = ch.PreferenceList("foo", 3); // belongs to node A
+            preferenceList.ShouldBeEquivalentTo(new[] { 'G', 'H', 'I' });
         }
     }
 }

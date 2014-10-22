@@ -5,9 +5,8 @@ using EnsureThat;
 
 namespace Wildling.Core
 {
-    public abstract class Range<T> : 
-        IEnumerable<T>,
-        IEquatable<Range<T>> where T : struct, IComparable<T>
+    public abstract class Range<T> :
+        IEnumerable<T>, IEquatable<Range<T>>, IComparable<Range<T>> where T : struct, IComparable<T>
     {
         readonly T _start;
         readonly T _end;
@@ -79,6 +78,12 @@ namespace Wildling.Core
         }
 
         public abstract IEnumerator<T> GetEnumerator();
+
+
+        public int CompareTo(Range<T> other)
+        {
+            return Start.CompareTo(other.Start);
+        }
 
         public override string ToString()
         {

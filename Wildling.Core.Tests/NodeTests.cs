@@ -1,11 +1,10 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
+using System.Threading.Tasks;
 using FluentAssertions;
-using NSubstitute;
+using Moq;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
-using Wildling.Core.Extensions;
 using Wildling.Core.Tests.SupportingTypes;
 
 namespace Wildling.Core.Tests
@@ -14,35 +13,48 @@ namespace Wildling.Core.Tests
     public class NodeTests
     {
         [Test]
-        public void Put_should_store_value_for_key_when_node_owns_partition()
+        public async Task Put_should_store_value_for_key_when_node_owns_partition()
         {
-            var node = CreateSubstituteNode("A", new[] { "A", "B", "C" });
+            var node = new Node("A", new[] { "A", "B", "C" });
+            var remote = new Mock<IRemoteNodeClient>();
+            node.UseRemoteNodeClient(remote.Object);
 
-            node.Put("foo", "bar");
-            node.Get("foo").Should().Be("bar");
+            await node.PutAsync("foo", JObject.Parse("{'value':'bar'}"));
+
+            JArray result = await node.GetAsync("foo");
+            string value = ((dynamic) result[0]).value;
+            value.Should().Be("bar");
         }
 
         [Test]
-        public void Put_should_not_store_value_for_key_when_it_does_not_own_partition()
+        public async Task Put_should_not_store_value_for_key_when_it_does_not_own_partition()
         {
-            var node = CreateSubstituteNode("B", new[] { "A", "B", "C" }, 32);
+            var node = new Node("B", new[] { "A", "B", "C" }, 32);
+            var remote = new Mock<IRemoteNodeClient>();
+            node.UseRemoteNodeClient(remote.Object);
 
-            node.Put("foo", "bar");
-            node.ReceivedWithAnyArgs().RemotePutAsyncTestSeam(null, null, null);
+            await node.PutAsync("foo", JObject.Parse("{'value':'bar'}"));
+            remote.Verify(x => x.RemotePutAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<JObject>()));
         }
 
         [Test]
-        public void Put_should_only_be_stored_by_a_single_node_in_cluster()
+        public async Task Put_should_only_be_stored_by_a_single_node_in_cluster()
         {
             var names = new CharRange('A', 'J').ToStrings().ToArray();
-            var nodes = names.Select(name => CreateSubstituteNode(name, names));
+            var nodes = names.Select(name =>
+            {
+                var node = new Node(name, names);
+                var remote = new Mock<IRemoteNodeClient>();
+                node.UseRemoteNodeClient(remote.Object);
+                return node;
+            });
 
             int nodesStoringValue = 0;
             foreach (var node in nodes)
             {
-                node.Put("foo", "bar");
-                object value = node.Get("foo");
-                if (value != null && value.GetType() != typeof(HttpResponseMessage))
+                await node.PutAsync("foo", JObject.Parse("{'value':'bar'}"));
+                JArray value = await node.GetAsync("foo");
+                if (value != null)
                 {
                     nodesStoringValue++;
                     Console.WriteLine("{0} {1}", node.Name, value);
@@ -56,14 +68,6 @@ namespace Wildling.Core.Tests
         {
             var node = new Node(null, Enumerable.Empty<string>());
             node.Name.Should().NotBeNullOrEmpty("A node should always have a valid name");
-        }
-
-        TestableNode CreateSubstituteNode(string name, IEnumerable<string> nodes, int partitions = 32)
-        {
-            var node = Substitute.ForPartsOf<TestableNode>(name, nodes, partitions);
-            node.WhenForAnyArgs(n => n.RemotePutAsyncTestSeam(null, null, null)).DoNotCallBase();
-            node.WhenForAnyArgs(n => n.RemoteGetAsyncTestSeam(null, null)).DoNotCallBase();
-            return node;
         }
     }
 }

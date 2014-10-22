@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -13,7 +14,7 @@ namespace Wildling.Core
         const int SHA1Bits = 160;
         readonly List<string> _nodes;
         readonly int _partitions;
-        readonly Dictionary<HashRange, string> _ring = new Dictionary<HashRange, string>();
+        readonly SortedDictionary<HashRange, string> _ring = new SortedDictionary<HashRange, string>();
 
         public PartitionedConsistentHash(IEnumerable<string> nodes, int partitions = 32)
         {
@@ -73,7 +74,7 @@ namespace Wildling.Core
             return node;
         }
 
-        public string[] PreferenceList(string key, int n = 3)
+        public IList<string> PreferenceList(string key, int n = 3)
         {
             // return a list of successive nodes that can also hold this value
             var list = new List<string>();
@@ -90,7 +91,7 @@ namespace Wildling.Core
                     cover -= 1;
                 }
             }
-            return list.ToArray();
+            return list;
         }
 
         List<string> Cluster(IEnumerable<string> nodes)

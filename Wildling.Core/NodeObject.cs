@@ -1,5 +1,6 @@
 ﻿using System;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Wildling.Core
 {
@@ -8,14 +9,14 @@ namespace Wildling.Core
     /// </summary>
     public class NodeObject
     {
-        readonly object _value;
+        readonly JObject _value;
 
-        public NodeObject(object value)
+        public NodeObject(JObject value)
         {
             _value = value;
         }
 
-        public object Value
+        public JObject Value
         {
             get { return _value; }
         }
@@ -27,8 +28,7 @@ namespace Wildling.Core
 
         public static NodeObject Parse(string json)
         {
-            object value = JsonConvert.DeserializeObject(json);
-            return new NodeObject(value);
+            return new NodeObject(JObject.Parse(json));
         }
     }
 }

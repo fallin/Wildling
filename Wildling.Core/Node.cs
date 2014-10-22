@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Net.Http;
 using System.Numerics;
-using System.Text;
 using System.Threading.Tasks;
 using Common.Logging;
-using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Wildling.Core.Extensions;
 
 namespace Wildling.Core
 {
@@ -19,12 +18,15 @@ namespace Wildling.Core
         readonly string _name;
         readonly PartitionedConsistentHash _ring;
         readonly Dictionary<BigInteger, NodeObject> _data = new Dictionary<BigInteger, NodeObject>();
+        IRemoteNodeClient _remote;
 
         public Node(string name, IEnumerable<string> nodes, int partitions = 32)
         {
             _name = name ?? GenerateNodeName();
             string[] combinedNodes = new List<string>(nodes) { _name }.ToArray();
             _ring = new PartitionedConsistentHash(combinedNodes, partitions);
+
+            _remote = new RemoteNodeClient(this);
         }
 
         string GenerateNodeName()
@@ -40,79 +42,88 @@ namespace Wildling.Core
             get { return _name; }
         }
 
-        public async Task PutAsync(string key, object value)
+        public async Task PutAsync(string key, JObject value, int n = 1)
         {
-            string node = _ring.Node(key);
-            if (node == _name)
+            if (n == 0) // store locally
             {
-                Log.DebugFormat("put {0} {1}", key, value);
+                Log.DebugFormat("put n={0} k={1} v={2}", n, key, value);
                 BigInteger hash = _ring.Hash(key);
                 _data[hash] = new NodeObject(value);
             }
-            else
+            else if (_ring.PreferenceList(key, n).Contains(_name))
             {
-                Log.DebugFormat("forwarded to node {0}", node);
-                await RemotePutAsync(node, key, value);
-            }
-        }
-
-        public async Task<object> GetAsync(string key)
-        {
-            object value;
-
-            string node = _ring.Node(key);
-            if (node == _name)
-            {
+                Log.DebugFormat("put n={0} k={1} v={2}", n, key, value);
                 BigInteger hash = _ring.Hash(key);
-                value = _data[hash].Value;
-                Log.DebugFormat("get {0} {1}", key, value);
+                _data[hash] = new NodeObject(value);
+                await ReplicatePutAsync(key, value, n);
             }
             else
             {
-                Log.DebugFormat("forwarded to node {0}", node);
-                value = await RemoteGetAsync(node, key);
+                string node = _ring.Node(key);
+                Log.DebugFormat("forward to node {0}", node);
+                await _remote.RemotePutAsync(node, key, value);
             }
-
-            return value;
         }
 
-        protected virtual async Task RemotePutAsync(string node, string key, object value)
+        public async Task<JArray> GetAsync(string key, int n = 1)
         {
-            const string mediaType = "application/json";
-            var requestUri = GetRequestUri(node, key);
-
-            using (var client = HttpClientFactory.Create())
+            JArray results = new JArray();
+            if (n == 0) // store locally
             {
-                string json = JsonConvert.SerializeObject(value);
-                HttpContent content = new StringContent(json, Encoding.UTF8, mediaType);
-
-                await client.PutAsync(requestUri, content);
+                Log.DebugFormat("get n={0} k={1}", n, key);
+                BigInteger hash = _ring.Hash(key);
+                JObject value = _data[hash].Value;
+                results.Add(value);
             }
-        }
-
-        protected virtual async Task<object> RemoteGetAsync(string node, string key)
-        {
-            var requestUri = GetRequestUri(node, key);
-
-            object value;
-            using (var client = HttpClientFactory.Create())
+            else if (_ring.PreferenceList(key, n).Contains(_name))
             {
-                // TODO: find a better solution
-                HttpResponseMessage response = await client.GetAsync(requestUri);
-                value = response;
+                Log.DebugFormat("get n={0} k={1}", n, key);
+                JArray replicaResponse = await ReplicateGetAsync(key, n);
+                results = replicaResponse;
+
+                NodeObject nodeObject = _data[_ring.Hash(key)];
+                results.Add(nodeObject.Value);
+            }
+            else
+            {
+                string node = _ring.Node(key);
+                Log.DebugFormat("forward to node {0}", node);
+                JArray remoteResponse = await _remote.RemoteGetAsync(node, key);
+                results = remoteResponse;
             }
 
-            return value;
+            return results;
         }
 
-        Uri GetRequestUri(string node, string key)
+        async Task ReplicatePutAsync(string key, JObject value, int n)
         {
-            string uriSafeKey = Uri.EscapeUriString(key);
+            IList<string> list = _ring.PreferenceList(key, n);
+            list.Remove(_name);
 
-            UriBuilder builder = GetUriBuilder(node);
-            builder.Path = string.Format("wildling/api/{0}", uriSafeKey);
-            Uri requestUri = builder.Uri;
-            return requestUri;
+            string replicateNode;
+            while ((replicateNode = list.Shift()) != null)
+            {
+                await _remote.RemotePutAsync(replicateNode, key, value);
+            }
+        }
+
+        async Task<JArray> ReplicateGetAsync(string key, int n)
+        {
+            IList<string> list = _ring.PreferenceList(key, n);
+            list.Remove(_name);
+
+            var results = new JArray();
+            string replicateNode;
+            while ((replicateNode = list.Shift()) != null)
+            {
+                JArray result = await _remote.RemoteGetAsync(replicateNode, key);
+                foreach (JObject token in result.Children<JObject>())
+                {
+                    results.Add(token);
+                }
+            }
+
+            return results;
         }
 
         public UriBuilder GetUriBuilder(string node)
@@ -124,6 +135,11 @@ namespace Wildling.Core
 
             var builder = new UriBuilder(Uri.UriSchemeHttp, host, port);
             return builder;
+        }
+
+        public void UseRemoteNodeClient(IRemoteNodeClient remote)
+        {
+            _remote = remote;
         }
     }
 }

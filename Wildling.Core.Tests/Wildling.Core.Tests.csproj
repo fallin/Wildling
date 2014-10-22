@@ -50,12 +50,12 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\FluentAssertions.3.2.1\lib\net45\FluentAssertions.Core.dll</HintPath>
     </Reference>
+    <Reference Include="Moq">
+      <HintPath>..\packages\Moq.4.2.1409.1722\lib\net40\Moq.dll</HintPath>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=6.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Newtonsoft.Json.6.0.5\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="NSubstitute">
-      <HintPath>..\packages\NSubstitute.1.7.2.0\lib\NET45\NSubstitute.dll</HintPath>
     </Reference>
     <Reference Include="nunit.framework">
       <HintPath>..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
@@ -85,7 +85,6 @@
     <Compile Include="Extensions\ListExtensionsTests.cs" />
     <Compile Include="HashRangeTests.cs" />
     <Compile Include="SupportingTypes\CharRange.cs" />
-    <Compile Include="SupportingTypes\TestableNode.cs" />
     <Compile Include="NodeTests.cs" />
     <Compile Include="PartitionedConsistentHashTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
