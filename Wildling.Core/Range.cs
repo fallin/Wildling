@@ -5,8 +5,8 @@ using EnsureThat;
 
 namespace Wildling.Core
 {
-    public abstract class Range<T> :
-        IEnumerable<T>, IEquatable<Range<T>>, IComparable<Range<T>> where T : struct, IComparable<T>
+    abstract class Range<T> : IEnumerable<T>, IEquatable<Range<T>>, IComparable<Range<T>> 
+        where T : struct, IComparable<T>
     {
         readonly T _start;
         readonly T _end;

@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using Common.Logging;
+using EnsureThat;
 using Newtonsoft.Json.Linq;
 using Wildling.Core.Extensions;
 
@@ -12,13 +14,16 @@ namespace Wildling.Core
     /// <summary>
     /// Manages a hash ring as well as a hash of data
     /// </summary>
+    [DebuggerDisplay("Node={_name}")]
     public class Node
     {
         static readonly ILog Log = LogManager.GetCurrentClassLogger();
         readonly string _name;
         readonly PartitionedConsistentHash _ring;
-        readonly Dictionary<BigInteger, NodeObject> _data = new Dictionary<BigInteger, NodeObject>();
+        readonly Dictionary<BigInteger, Siblings> _data = new Dictionary<BigInteger, Siblings>();
+        readonly DvvKernel _kernel = new DvvKernel();
         IRemoteNodeClient _remote;
+        int _n = 3;
 
         public Node(string name, IEnumerable<string> nodes, int partitions = 32)
         {
@@ -42,88 +47,134 @@ namespace Wildling.Core
             get { return _name; }
         }
 
-        public async Task PutAsync(string key, JObject value, int n = 1)
+        internal DvvKernel Kernel
         {
-            if (n == 0) // store locally
-            {
-                Log.DebugFormat("put n={0} k={1} v={2}", n, key, value);
-                BigInteger hash = _ring.Hash(key);
-                _data[hash] = new NodeObject(value);
-            }
-            else if (_ring.PreferenceList(key, n).Contains(_name))
-            {
-                Log.DebugFormat("put n={0} k={1} v={2}", n, key, value);
-                BigInteger hash = _ring.Hash(key);
-                _data[hash] = new NodeObject(value);
-                await ReplicatePutAsync(key, value, n);
-            }
-            else
-            {
-                string node = _ring.Node(key);
-                Log.DebugFormat("forward to node {0}", node);
-                await _remote.RemotePutAsync(node, key, value);
-            }
+            get { return _kernel; }
         }
 
-        public async Task<JArray> GetAsync(string key, int n = 1)
+        internal async Task<Siblings> GetAsync(string key)
         {
-            JArray results = new JArray();
-            if (n == 0) // store locally
+            Ensure.That(key, "key").IsNotNullOrWhiteSpace();
+
+            BigInteger hash = _ring.Hash(key);
+            Siblings siblings;
+
+            if (_ring.PreferenceList(key, _n).Contains(_name))
             {
-                Log.DebugFormat("get n={0} k={1}", n, key);
-                BigInteger hash = _ring.Hash(key);
-                JObject value = _data[hash].Value;
-                results.Add(value);
-            }
-            else if (_ring.PreferenceList(key, n).Contains(_name))
-            {
-                Log.DebugFormat("get n={0} k={1}", n, key);
-                JArray replicaResponse = await ReplicateGetAsync(key, n);
-                results = replicaResponse;
+                Log.DebugFormat("get k={0}", key);
 
-                NodeObject nodeObject = _data[_ring.Hash(key)];
-                results.Add(nodeObject.Value);
-            }
-            else
-            {
-                string node = _ring.Node(key);
-                Log.DebugFormat("forward to node {0}", node);
-                JArray remoteResponse = await _remote.RemoteGetAsync(node, key);
-                results = remoteResponse;
-            }
-
-            return results;
-        }
-
-        async Task ReplicatePutAsync(string key, JObject value, int n)
-        {
-            IList<string> list = _ring.PreferenceList(key, n);
-            list.Remove(_name);
-
-            string replicateNode;
-            while ((replicateNode = list.Shift()) != null)
-            {
-                await _remote.RemotePutAsync(replicateNode, key, value);
-            }
-        }
-
-        async Task<JArray> ReplicateGetAsync(string key, int n)
-        {
-            IList<string> list = _ring.PreferenceList(key, n);
-            list.Remove(_name);
-
-            var results = new JArray();
-            string replicateNode;
-            while ((replicateNode = list.Shift()) != null)
-            {
-                JArray result = await _remote.RemoteGetAsync(replicateNode, key);
-                foreach (JObject token in result.Children<JObject>())
+                List<Siblings> replicaValues = await ReplicateGetAsync(key);
+                if (replicaValues != null)
                 {
-                    results.Add(token);
+                    replicaValues = replicaValues.Where(x => x != null).ToList();
                 }
+                else
+                {
+                    replicaValues = new List<Siblings>();
+                }
+                
+                replicaValues.Add(_data[hash]);
+
+                siblings = _kernel.Merge(replicaValues);
+            }
+            else
+            {
+                string node = _ring.Node(key);
+                Log.DebugFormat("forward to coordinating node {0}", node);
+                siblings = await _remote.GetAsync(node, key);
             }
 
-            return results;
+            return siblings;
+        }
+
+        internal async Task PutAsync(string key, JObject value, VersionVector context = null)
+        {
+            Ensure.That(key, "key").IsNotNullOrWhiteSpace();
+
+            context = context ?? new VersionVector();
+
+            string coordinatingNode = _ring.Node(key);
+            if (_ring.PreferenceList(key, _n).Contains(_name))
+            {
+                BigInteger hash = _ring.Hash(key);
+                Siblings siblings = _data.GetValueOrDefault(hash);
+                if (siblings != null)
+                {
+                    // discard obsolete versions
+                    siblings = _kernel.Discard(siblings, context);
+                }
+                else
+                {
+                    siblings = new Siblings();
+                }
+                
+                DottedVersionVector dvv = _kernel.Event(context, siblings, _name);
+                var versionedObject = new VersionedObject(value, dvv);
+
+                siblings.Add(versionedObject);
+
+                _data[hash] = siblings;
+
+                await ReplicatePutAsync(key, siblings);
+            }
+            else
+            {
+                Log.DebugFormat("forward to coordinating node {0}", coordinatingNode);
+                await _remote.PutAsync(coordinatingNode, key, value, context);
+            }
+        }
+
+        internal Siblings GetReplicaAsync(string key)
+        {
+            Ensure.That(key, "key").IsNotNullOrWhiteSpace();
+
+            Log.DebugFormat("get-replica k={0}", key);
+
+            BigInteger hash = _ring.Hash(key);
+            Siblings siblings = _data[hash];
+
+            return siblings;
+        }
+
+        internal void PutReplicaAsync(string key, Siblings coordinatorSiblings)
+        {
+            Ensure.That(key, "key").IsNotNullOrWhiteSpace();
+
+            Log.DebugFormat("put-local k={0}", key);
+
+            BigInteger hash = _ring.Hash(key);
+            Siblings siblings = _data.GetValueOrDefault(hash) ?? new Siblings();
+            siblings = _kernel.Sync(siblings, coordinatorSiblings);
+
+            _data[hash] = siblings;
+        }
+
+        async Task<List<Siblings>> ReplicateGetAsync(string key)
+        {
+            IList<string> list = _ring.PreferenceList(key, _n);
+            list.Remove(_name);
+
+            var replicaValues = new List<Siblings>();
+            string replicateNode;
+            while ((replicateNode = list.Shift()) != null)
+            {
+                Siblings result = await _remote.GetReplicaAsync(replicateNode, key);
+                replicaValues.Add(result);
+            }
+
+            return replicaValues;
+        }
+
+        async Task ReplicatePutAsync(string key, Siblings siblings)
+        {
+            IList<string> list = _ring.PreferenceList(key, _n);
+            list.Remove(_name);
+
+            string replicateNode;
+            while ((replicateNode = list.Shift()) != null)
+            {
+                await _remote.PutReplicaAsync(replicateNode, key, siblings);
+            }
         }
 
         public UriBuilder GetUriBuilder(string node)
@@ -137,7 +188,7 @@ namespace Wildling.Core
             return builder;
         }
 
-        public void UseRemoteNodeClient(IRemoteNodeClient remote)
+        internal void UseRemoteNodeClient(IRemoteNodeClient remote)
         {
             _remote = remote;
         }

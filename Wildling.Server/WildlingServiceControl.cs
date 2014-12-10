@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.ServiceModel;
 using System.Web.Http;
 using System.Web.Http.SelfHost;
 using Common.Logging;
+using Newtonsoft.Json;
 using TinyIoC;
 using Topshelf;
 using Wildling.Core;
+using Wildling.Core.Converters;
 
 namespace Wildling.Server
 {
@@ -42,6 +46,12 @@ namespace Wildling.Server
                 routeTemplate: "api/{controller}/{id}", 
                 defaults: new {id = RouteParameter.Optional});
             config.DependencyResolver = new TinyIoCDependencyResolver(container);
+
+            // TODO: Use MEF to load custom JSON converters?
+            // Add custom JSON converters...
+            IList<JsonConverter> converters = config.Formatters.JsonFormatter.SerializerSettings.Converters;
+            converters.Add(new DottedVersionVectorJsonConverter());
+            converters.Add(new VersionedObjectJsonConverter());
 
             _server = new HttpSelfHostServer(config);
             try

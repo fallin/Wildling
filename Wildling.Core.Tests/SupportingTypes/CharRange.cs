@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace Wildling.Core.Tests.SupportingTypes
 {
-    public class CharRange : Range<char>
+    class CharRange : Range<char>
     {
         public CharRange(char start, char end) : base(start, end)
         {

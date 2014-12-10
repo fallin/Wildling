@@ -9,7 +9,7 @@ using Wildling.Core.Extensions;
 
 namespace Wildling.Core
 {
-    public class PartitionedConsistentHash
+    class PartitionedConsistentHash
     {
         const int SHA1Bits = 160;
         readonly List<string> _nodes;
@@ -24,6 +24,11 @@ namespace Wildling.Core
             _nodes = Cluster(nodes);
         }
 
+        /// <summary>
+        /// Calculates the hash of the specified key.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <returns>The hash value of the key.</returns>
         public BigInteger Hash(string key)
         {
             byte[] buffer = Encoding.UTF8.GetBytes(key);
@@ -62,6 +67,11 @@ namespace Wildling.Core
             }
         }
 
+        /// <summary>
+        /// Gets the coordinating node for the specified key.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <returns>The name of the coordinating node.</returns>
         public string Node(string key)
         {
             // returns the correct node in the ring (for the key)

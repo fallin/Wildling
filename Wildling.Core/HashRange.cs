@@ -4,7 +4,7 @@ using System.Numerics;
 
 namespace Wildling.Core
 {
-    public class HashRange : Range<BigInteger>
+    class HashRange : Range<BigInteger>
     {
         public HashRange(BigInteger start, BigInteger end) : base(start, end)
         {

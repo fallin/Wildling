@@ -1,12 +1,16 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 namespace Wildling.Core
 {
-    public interface IRemoteNodeClient
+    interface IRemoteNodeClient
     {
-        Task RemotePutAsync(string node, string key, JObject value);
-        Task<JArray> RemoteGetAsync(string node, string key);
+        Task PutAsync(string node, string key, JObject value, VersionVector context);
+        Task<Siblings> GetAsync(string node, string key);
+
+        Task PutReplicaAsync(string node, string key, Siblings siblings);
+        Task<Siblings> GetReplicaAsync(string node, string key);
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web.Http;
@@ -27,10 +28,16 @@ namespace Wildling.Server
         {
             try
             {
-                int n = GetN(req) ?? 3;
+                Siblings siblings = await _node.GetAsync(key);
 
-                JArray value = await _node.GetAsync(key, n);
-                return Ok(value);
+                // Only return the values (strip-off the clocks)
+                List<JObject> values = siblings.Select(s => s.Value).ToList();
+
+                HttpResponseMessage res = req.CreateResponse(values);
+                VersionVector context = _node.Kernel.Join(siblings);
+                res.Headers.Add("X-Context", context.ToContextString());
+
+                return ResponseMessage(res);
             }
             catch (KeyNotFoundException e)
             {
@@ -40,27 +47,46 @@ namespace Wildling.Server
 
         [Route("{key}")]
         [HttpPut]
-        public async Task<OkResult> Put(HttpRequestMessage req, string key, [FromBody] JObject value, string context = null)
+        public async Task<OkResult> Put(HttpRequestMessage req, string key, [FromBody] JObject value)
         {
-            int n = GetN(req) ?? 3;
+            VersionVector context = GetContext(req);
 
-            await _node.PutAsync(key, value, n);
+            await _node.PutAsync(key, value, context);
             return Ok();
         }
 
-        int? GetN(HttpRequestMessage request)
+        [Route("replica/{key}")]
+        [HttpGet]
+        public IHttpActionResult GetReplica(HttpRequestMessage req, string key)
         {
-            int? n = null;
-            string headerValue = request.GetHeader("X-Wildling-N");
-            if (headerValue != null)
+            try
             {
-                int parsedValue;
-                if (int.TryParse(headerValue, out parsedValue))
-                {
-                    n = parsedValue;
-                }
+                Siblings siblings = _node.GetReplicaAsync(key);
+                return Ok(siblings);
             }
-            return n;
+            catch (KeyNotFoundException e)
+            {
+                return NotFound();
+            }
+        }
+
+        [Route("replica/{key}")]
+        [HttpPut]
+        public IHttpActionResult PutReplica(HttpRequestMessage req, string key, [FromBody] Siblings siblings)
+        {
+            _node.PutReplicaAsync(key, siblings);
+            return Ok();
+        }
+
+        VersionVector GetContext(HttpRequestMessage request)
+        {
+            VersionVector vv = null;
+            string headerValue = request.GetHeader("X-Context");
+            if (!string.IsNullOrEmpty(headerValue))
+            {
+                vv = VersionVector.FromContextString(headerValue);
+            }
+            return vv;
         }
     }
 }

@@ -7,7 +7,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Wildling.Core
 {
-    public class Configuration
+    class Configuration
     {
         static readonly ILog Log = LogManager.GetCurrentClassLogger();
         readonly Dictionary<string, JObject> _configs;
