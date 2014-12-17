@@ -19,7 +19,7 @@ namespace Wildling.Core
             _node = node;
         }
 
-        public async Task PutAsync(string node, string key, JObject value, VersionVector context)
+        public async Task PutAsync(string node, string key, JToken value, VersionVector context)
         {
             var requestUri = GetRequestUri(node, key);
 

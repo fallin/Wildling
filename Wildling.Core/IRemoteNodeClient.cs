@@ -7,7 +7,7 @@ namespace Wildling.Core
 {
     interface IRemoteNodeClient
     {
-        Task PutAsync(string node, string key, JObject value, VersionVector context);
+        Task PutAsync(string node, string key, JToken value, VersionVector context);
         Task<Siblings> GetAsync(string node, string key);
 
         Task PutReplicaAsync(string node, string key, Siblings siblings);

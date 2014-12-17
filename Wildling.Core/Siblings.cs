@@ -18,12 +18,12 @@ namespace Wildling.Core
         {
         }
 
-        public void Add(JObject value, DottedVersionVector clock)
+        public void Add(JToken value, DottedVersionVector clock)
         {
             Add(new VersionedObject(value, clock));
         }
 
-        public void Add(JObject value, string version)
+        public void Add(JToken value, string version)
         {
             Add(value, DottedVersionVector.Parse(version));
         }

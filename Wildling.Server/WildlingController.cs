@@ -31,7 +31,7 @@ namespace Wildling.Server
                 Siblings siblings = await _node.GetAsync(key);
 
                 // Only return the values (strip-off the clocks)
-                List<JObject> values = siblings.Select(s => s.Value).ToList();
+                List<JToken> values = siblings.Select(s => s.Value).ToList();
 
                 HttpResponseMessage res = req.CreateResponse(values);
                 VersionVector context = _node.Kernel.Join(siblings);
@@ -47,7 +47,7 @@ namespace Wildling.Server
 
         [Route("{key}")]
         [HttpPut]
-        public async Task<OkResult> Put(HttpRequestMessage req, string key, [FromBody] JObject value)
+        public async Task<OkResult> Put(HttpRequestMessage req, string key, [FromBody] JToken value)
         {
             VersionVector context = GetContext(req);
 

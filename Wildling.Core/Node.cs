@@ -87,7 +87,7 @@ namespace Wildling.Core
             return siblings;
         }
 
-        internal async Task PutAsync(string key, JObject value, VersionVector context = null)
+        internal async Task PutAsync(string key, JToken value, VersionVector context = null)
         {
             Ensure.That(key, "key").IsNotNullOrWhiteSpace();
 
@@ -140,7 +140,7 @@ namespace Wildling.Core
         {
             Ensure.That(key, "key").IsNotNullOrWhiteSpace();
 
-            Log.DebugFormat("put-local k={0}", key);
+            Log.DebugFormat("put-replica k={0}", key);
 
             BigInteger hash = _ring.Hash(key);
             Siblings siblings = _data.GetValueOrDefault(hash) ?? new Siblings();

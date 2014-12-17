@@ -14,10 +14,10 @@ namespace Wildling.Core
     [DebuggerDisplay("Dot={Clock._dot}")]
     public sealed class VersionedObject : IEquatable<VersionedObject>, IJsonSerializable
     {
-        public JObject Value { get; private set; }
+        public JToken Value { get; private set; }
         public DottedVersionVector Clock { get; private set; }
 
-        public VersionedObject(JObject value, DottedVersionVector clock)
+        public VersionedObject(JToken value, DottedVersionVector clock)
         {
             Ensure.That(value, "value").IsNotNull();
             Ensure.That(clock, "clock").IsNotNull();
@@ -82,7 +82,7 @@ namespace Wildling.Core
 
         public static VersionedObject FromJson(JToken token)
         {
-            JObject value = (JObject) token["value"];
+            JToken value = token["value"];
             DottedVersionVector dvv = DottedVersionVector.FromJson(token["clock"]);
             return new VersionedObject(value, dvv);
         }
