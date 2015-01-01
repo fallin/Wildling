@@ -23,10 +23,10 @@ namespace Wildling.Core
         readonly Dictionary<BigInteger, Siblings> _data = new Dictionary<BigInteger, Siblings>();
         readonly DvvKernel _kernel = new DvvKernel();
         IRemoteNodeClient _remote;
-        int _n = 3;
 
         public Node(string name, IEnumerable<string> nodes, int partitions = 32)
         {
+            N = 3;
             _name = name ?? GenerateNodeName();
             string[] combinedNodes = new List<string>(nodes) { _name }.ToArray();
             _ring = new PartitionedConsistentHash(combinedNodes, partitions);
@@ -52,6 +52,10 @@ namespace Wildling.Core
             get { return _kernel; }
         }
 
+        public int N { get; set; }
+        public int W { get; set; }
+        public int R { get; set; }
+
         internal async Task<Siblings> GetAsync(string key)
         {
             Ensure.That(key, "key").IsNotNullOrWhiteSpace();
@@ -59,7 +63,7 @@ namespace Wildling.Core
             BigInteger hash = _ring.Hash(key);
             Siblings siblings;
 
-            if (_ring.PreferenceList(key, _n).Contains(_name))
+            if (_ring.PreferenceList(key, N).Contains(_name))
             {
                 Log.DebugFormat("get k={0}", key);
 
@@ -94,8 +98,10 @@ namespace Wildling.Core
             context = context ?? new VersionVector();
 
             string coordinatingNode = _ring.Node(key);
-            if (_ring.PreferenceList(key, _n).Contains(_name))
+            if (_ring.PreferenceList(key, N).Contains(_name))
             {
+                Log.DebugFormat("put k={0}", key);
+
                 BigInteger hash = _ring.Hash(key);
                 Siblings siblings = _data.GetValueOrDefault(hash);
                 if (siblings != null)
@@ -151,15 +157,25 @@ namespace Wildling.Core
 
         async Task<List<Siblings>> ReplicateGetAsync(string key)
         {
-            IList<string> list = _ring.PreferenceList(key, _n);
-            list.Remove(_name);
+            IList<string> replicaNodes = _ring.PreferenceList(key, N);
+            replicaNodes.Remove(_name);
 
             var replicaValues = new List<Siblings>();
-            string replicateNode;
-            while ((replicateNode = list.Shift()) != null)
+
+            List<Task<Siblings>> pendingGets = replicaNodes.Select(r => _remote.GetReplicaAsync(r, key)).ToList();
+            await Task.WhenAll(pendingGets);
+            
+            foreach (var pendingGet in pendingGets)
             {
-                Siblings result = await _remote.GetReplicaAsync(replicateNode, key);
-                replicaValues.Add(result);
+                try
+                {
+                    Siblings siblings = await pendingGet;
+                    replicaValues.Add(siblings);
+                }
+                catch (Exception e)
+                {
+                    Log.Error("Error replicating get -- ignored", e);
+                }
             }
 
             return replicaValues;
@@ -167,14 +183,11 @@ namespace Wildling.Core
 
         async Task ReplicatePutAsync(string key, Siblings siblings)
         {
-            IList<string> list = _ring.PreferenceList(key, _n);
-            list.Remove(_name);
+            IList<string> replicaNodes = _ring.PreferenceList(key, N);
+            replicaNodes.Remove(_name);
 
-            string replicateNode;
-            while ((replicateNode = list.Shift()) != null)
-            {
-                await _remote.PutReplicaAsync(replicateNode, key, siblings);
-            }
+            List<Task> pendingPuts = replicaNodes.Select(r => _remote.PutReplicaAsync(r, key, siblings)).ToList();
+            await Task.WhenAll(pendingPuts);
         }
 
         public UriBuilder GetUriBuilder(string node)
