@@ -35,11 +35,7 @@ namespace Wildling.Core
             using (var crypto = SHA1.Create())
             {
                 byte[] hashBytes = crypto.ComputeHash(buffer);
-
-                // This isn't really necessary, but maintains compatibility with Eric Redmond's
-                // ruby implementation of distributed data-structures teaching tool/samples:
-                // Presumably, ruby treats byte[] as big-endian when converting to integer (string#hex)
-                //Array.Reverse(hashBytes);
+                Array.Reverse(hashBytes);
 
                 // Make sure that a positive value is not incorrectly instantiated as a 
                 // negative value by adding a byte whose value is zero to the end of the array
