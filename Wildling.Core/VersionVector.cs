@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
+using EnsureThat;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Piglet.Parser;
 using Wildling.Core.Extensions;
 
 namespace Wildling.Core
@@ -14,6 +16,7 @@ namespace Wildling.Core
     /// </summary>
     public class VersionVector
     {
+        readonly static Lazy<IParser<object>> Parser = new Lazy<IParser<object>>(CreateParser);
         readonly Dictionary<string, long> _events;
 
         public VersionVector() : this((IDictionary<string, long>)null) {}
@@ -77,26 +80,71 @@ namespace Wildling.Core
 
         public string ToContextString()
         {
-            string contextJson = JsonConvert.SerializeObject(_events, Formatting.None);
-            byte[] contextBytes = Encoding.UTF8.GetBytes(contextJson);
-            string contextBase64 = Convert.ToBase64String(contextBytes);
+            // Generally, you'd encode this string, but leaving the VV structure
+            // for debugging/demonstration purposes.
+            return ToString();
 
-            return contextBase64;
-            //return contextJson;
+            //string contextJson = JsonConvert.SerializeObject(_events, Formatting.None);
+            //byte[] contextBytes = Encoding.UTF8.GetBytes(contextJson);
+            //string contextBase64 = Convert.ToBase64String(contextBytes);
+
+            //return contextBase64;
         }
 
-        public static VersionVector FromContextString(string contextBase64)
+        public static VersionVector FromContextString(string context)
         {
-            byte[] bytes = Convert.FromBase64String(contextBase64);
-            string json = Encoding.UTF8.GetString(bytes);
+            return Parse(context);
 
-            var events = JsonConvert.DeserializeObject<Dictionary<string, long>>(json);
-            var vv = new VersionVector(events);
-            return vv;
+            //byte[] bytes = Convert.FromBase64String(contextBase64);
+            //string json = Encoding.UTF8.GetString(bytes);
 
-            //var events = JsonConvert.DeserializeObject<Dictionary<string, long>>(contextBase64);
+            //var events = JsonConvert.DeserializeObject<Dictionary<string, long>>(json);
             //var vv = new VersionVector(events);
             //return vv;
+        }
+
+        static IParser<object> CreateParser()
+        {
+            var config = ParserFactory.Fluent();
+
+            var vv = config.Rule(); // version vector
+            var ce = config.Rule(); // causal event
+
+            var serverId = config.Expression();
+            serverId.ThatMatches(@"[a-z]+").AndReturns(x => x);
+
+            var longValue = config.Expression();
+            longValue.ThatMatches(@"\d+").AndReturns(x => long.Parse(x));
+
+            ce.IsMadeUp.By("(")
+                .Followed.By(serverId).As("i")
+                .Followed.By(",")
+                .Followed.By(longValue).As("n")
+                .Followed.By(")")
+                .WhenFound(x => new CausalEvent(x.i, x.n));
+
+            vv.IsMadeUp.By("{")
+                .Followed.ByListOf<CausalEvent>(ce).As("events").ThatIs.SeparatedBy(",").Optional
+                .Followed.By("}")
+                .WhenFound(x => new VersionVector(x.events ?? Enumerable.Empty<CausalEvent>()));
+
+            IParser<object> parser = config.CreateParser();
+            return parser;
+        }
+
+        public static VersionVector Parse(string value)
+        {
+            VersionVector parsed;
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                parsed = new VersionVector();
+            }
+            else
+            {
+                parsed = (VersionVector)Parser.Value.Parse(value);
+            }
+
+            return parsed;
         }
     }
 }

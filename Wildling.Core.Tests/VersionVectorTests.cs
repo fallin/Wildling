@@ -59,5 +59,38 @@ namespace Wildling.Core.Tests
             ids.Should().HaveCount(2);
             ids.Should().OnlyHaveUniqueItems();
         }
+
+        [Test]
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase("  ")]
+        public void Parse_should_return_empty_vv_when_value_is_null_or_whitespace(object value)
+        {
+            var vv = VersionVector.Parse((string)value);
+            vv.Events.Should().HaveCount(0);
+        }
+
+        [Test]
+        public void Parse_should_return_empty_vv_when_no_causal_events()
+        {
+            var vv = VersionVector.Parse("{}");
+            vv.Events.Should().HaveCount(0);
+        }
+
+        [Test]
+        public void Parse_should_handle_single_event()
+        {
+            var vv = VersionVector.Parse("{(r,1)}");
+            vv["r"].Should().Be(1);
+            vv["s"].Should().Be(0);
+        }
+
+        [Test]
+        public void Parse_should_handle_multiple_events()
+        {
+            var vv = VersionVector.Parse("{(r,1),(s,3)}");
+            vv["r"].Should().Be(1);
+            vv["s"].Should().Be(3);
+        }
     }
 }
