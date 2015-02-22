@@ -40,6 +40,7 @@ namespace Wildling.Server
             Log.TraceFormat("Self-hosted WebAPI hosted @ {0}", address);
             
             var config = new HttpSelfHostConfiguration(address);
+            config.EnableCors();
             config.MapHttpAttributeRoutes();
             config.Routes.MapHttpRoute(
                 name: "DefaultApi", 

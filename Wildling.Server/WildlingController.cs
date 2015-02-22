@@ -5,6 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web.Http;
+using System.Web.Http.Cors;
 using System.Web.Http.Results;
 using Newtonsoft.Json.Linq;
 using Wildling.Core;
@@ -12,6 +13,7 @@ using Wildling.Server.Extensions;
 
 namespace Wildling.Server
 {
+    [EnableCors(origins: "*", headers: "*", methods: "*")]
     [RoutePrefix("wildling/api")]
     public class WildlingController : ApiController
     {
