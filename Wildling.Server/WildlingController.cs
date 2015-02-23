@@ -13,7 +13,7 @@ using Wildling.Server.Extensions;
 
 namespace Wildling.Server
 {
-    [EnableCors(origins: "*", headers: "*", methods: "*")]
+    [EnableCors(origins: "*", headers: "*", methods: "*", exposedHeaders: "X-Context")]
     [RoutePrefix("wildling/api")]
     public class WildlingController : ApiController
     {
