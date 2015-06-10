@@ -1,10 +1,10 @@
 # Wildling #
 
-Wildling is a distributed key/value store inspired by Amazon Dynamo and written in C#. Unlike most other implementations, it is intended for educational purposes and meant for learning and experimenting with distributed computing techniques.
+Wildling is a distributed key/value store inspired by Amazon Dynamo and written in C#. It is intended for learning and experimenting with distributed computing techniques.
 
 *Disclaimer: Please note this project has not been used in, nor intended for, production purposes.* 
 
-Distributed computing concepts and techniques are wonderfully interesting and useful. However, reading about these concepts only takes you so far -- I've found that implementing a technique in code provides much richer understanding and insight.
+Distributed computing concepts and techniques are wonderfully interesting and useful. However, reading about these concepts only takes you so far -- implementing a technique in code provides much richer understanding and insight.
 
 I am not an expert at distributed computing and many of these concepts are new to me. I am learning and this is my effort to put these concepts into practice and thought others may find value in this code as well. It is likely there are mistakes and misunderstandings exposed in the code -- if you see a bug or concept that is incorrect, please feel free to let me know.
 
