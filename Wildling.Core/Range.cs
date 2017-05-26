@@ -19,15 +19,9 @@ namespace Wildling.Core
             _end = end;
         }
 
-        protected T Start
-        {
-            get { return _start; }
-        }
+        protected T Start => _start;
 
-        protected T End
-        {
-            get { return _end; }
-        }
+        protected T End => _end;
 
         public bool Covers(T value)
         {
@@ -87,7 +81,7 @@ namespace Wildling.Core
 
         public override string ToString()
         {
-            return string.Format("{0}..{1}", _start, _end);
+            return $"{_start}..{_end}";
         }
     }
 }

@@ -123,7 +123,7 @@ namespace Wildling.Core
             double power = Log2(partitions);
             if (Math.Abs(power - (int) power) > Double.Epsilon)
             {
-                throw new ArgumentOutOfRangeException("partitions", partitions, "Must be a power of 2");
+                throw new ArgumentOutOfRangeException(nameof(partitions), partitions, "Must be a power of 2");
             }
         }
 

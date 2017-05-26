@@ -14,10 +14,10 @@ namespace Wildling.Core
     /// <summary>
     /// Manages a hash ring as well as a hash of data
     /// </summary>
-    [DebuggerDisplay("Node={_name}")]
+    [DebuggerDisplay("Node={" + nameof(_name) + "}")]
     public class Node
     {
-        static readonly ILog Log = LogManager.GetCurrentClassLogger();
+        static readonly ILog Log = LogManager.GetLogger<Node>();
         readonly string _name;
         readonly PartitionedConsistentHash _ring;
         readonly Dictionary<BigInteger, Siblings> _data = new Dictionary<BigInteger, Siblings>();
@@ -39,18 +39,12 @@ namespace Wildling.Core
             Process process = Process.GetCurrentProcess();
             int processId = process.Id;
 
-            return string.Format("{0}-{1:d5}", Environment.MachineName, processId);
+            return $"{Environment.MachineName}-{processId:d5}";
         }
 
-        public string Name
-        {
-            get { return _name; }
-        }
+        public string Name => _name;
 
-        internal DvvKernel Kernel
-        {
-            get { return _kernel; }
-        }
+        internal DvvKernel Kernel => _kernel;
 
         public int N { get; set; }
         public int W { get; set; }

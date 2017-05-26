@@ -74,7 +74,7 @@ namespace Wildling.Core
 
         public override string ToString()
         {
-            return string.Format("({0},{1})", _dot, _v);
+            return $"({_dot},{_v})";
         }
 
         static IParser<object> CreateParser()

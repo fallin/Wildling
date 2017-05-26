@@ -14,8 +14,8 @@ namespace Wildling.Core
     [DebuggerDisplay("Dot={Clock._dot}")]
     public sealed class VersionedObject : IEquatable<VersionedObject>, IJsonSerializable
     {
-        public JToken Value { get; private set; }
-        public DottedVersionVector Clock { get; private set; }
+        public JToken Value { get; }
+        public DottedVersionVector Clock { get; }
 
         public VersionedObject(JToken value, DottedVersionVector clock)
         {

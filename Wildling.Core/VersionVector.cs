@@ -16,12 +16,12 @@ namespace Wildling.Core
     /// </summary>
     public class VersionVector
     {
-        readonly static Lazy<IParser<object>> Parser = new Lazy<IParser<object>>(CreateParser);
+        static readonly Lazy<IParser<object>> Parser = new Lazy<IParser<object>>(CreateParser);
         readonly Dictionary<string, long> _events;
 
         public VersionVector() : this((IDictionary<string, long>)null) {}
 
-        private VersionVector(IDictionary<string, long> events)
+        VersionVector(IDictionary<string, long> events)
         {
             _events = events == null
                 ? new Dictionary<string, long>(DefaultComparer)

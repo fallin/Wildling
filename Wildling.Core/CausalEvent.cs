@@ -19,24 +19,18 @@ namespace Wildling.Core
 
         public override string ToString()
         {
-            return string.Format("({0},{1})", _i, _n);
+            return $"({_i},{_n})";
         }
 
         /// <summary>
         /// The server (replica node) identifier
         /// </summary>
-        public string I
-        {
-            get { return _i; }
-        }
+        public string I => _i;
 
         /// <summary>
         /// The counter representing a unique write
         /// </summary>
-        public long N
-        {
-            get { return _n; }
-        }
+        public long N => _n;
 
         #region Equality Members
 

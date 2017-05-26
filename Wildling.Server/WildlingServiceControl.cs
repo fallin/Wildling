@@ -15,7 +15,7 @@ namespace Wildling.Server
 {
     class WildlingServiceControl : ServiceControl
     {
-        static readonly ILog Log = LogManager.GetCurrentClassLogger();
+        static readonly ILog Log = LogManager.GetLogger<WildlingServiceControl>();
         readonly CommandLineOptions _options;
         HttpSelfHostServer _server;
 

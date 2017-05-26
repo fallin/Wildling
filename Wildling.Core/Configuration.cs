@@ -9,7 +9,7 @@ namespace Wildling.Core
 {
     class Configuration
     {
-        static readonly ILog Log = LogManager.GetCurrentClassLogger();
+        static readonly ILog Log = LogManager.GetLogger<Configuration>();
         readonly Dictionary<string, JObject> _configs;
         const StringComparison Comparison = StringComparison.CurrentCultureIgnoreCase;
 
@@ -37,7 +37,7 @@ namespace Wildling.Core
             JObject nodeConfig;
             if (!_configs.TryGetValue(name, out nodeConfig))
             {
-                string fileName = Path.Combine("Configuration", string.Format("{0}.json", name));
+                string fileName = Path.Combine("Configuration", $"{name}.json");
                 if (File.Exists(fileName))
                 {
                     //Log.TraceFormat("Configuration file [{0}] exists", fileName);

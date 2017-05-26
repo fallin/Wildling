@@ -77,7 +77,7 @@ namespace Wildling.Core
             string uriSafeKey = Uri.EscapeUriString(key);
 
             UriBuilder builder = _node.GetUriBuilder(node);
-            builder.Path = string.Format("wildling/api/{0}", uriSafeKey);
+            builder.Path = $"wildling/api/{uriSafeKey}";
             Uri requestUri = builder.Uri;
             return requestUri;
         }
@@ -139,7 +139,7 @@ namespace Wildling.Core
             string uriSafeKey = Uri.EscapeUriString(key);
 
             UriBuilder builder = _node.GetUriBuilder(node);
-            builder.Path = string.Format("wildling/api/replica/{0}", uriSafeKey);
+            builder.Path = $"wildling/api/replica/{uriSafeKey}";
             Uri requestUri = builder.Uri;
             return requestUri;
         }
