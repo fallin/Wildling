@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Wildling.Server": {
+      "commandName": "Project",
+      "commandLineArgs": "-name:a"
+    }
+  }
+}

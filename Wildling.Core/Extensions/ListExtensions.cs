@@ -31,7 +31,7 @@ namespace Wildling.Core.Extensions
             {
                 value = default(T);
             }
-            
+
             return value;
         }
 

@@ -23,7 +23,7 @@ namespace Wildling.Core
         {
             var requestUri = GetRequestUri(node, key);
 
-            using (var client = HttpClientFactory.Create())
+            using (var client = new HttpClient())
             {
                 var req = new HttpRequestMessage(HttpMethod.Put, requestUri);
                 req.Headers.Add("X-Context", context.ToString());
@@ -52,7 +52,7 @@ namespace Wildling.Core
             var requestUri = GetRequestUri(node, key);
 
             Siblings siblings;
-            using (var client = HttpClientFactory.Create())
+            using (var client = new HttpClient())
             {
                 var req = new HttpRequestMessage(HttpMethod.Get, requestUri);
                 req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(JsonMediaType));
@@ -86,7 +86,7 @@ namespace Wildling.Core
         {
             var requestUri = GetReplicaRequestUri(node, key);
 
-            using (var client = HttpClientFactory.Create())
+            using (var client = new HttpClient())
             {
                 var req = new HttpRequestMessage(HttpMethod.Put, requestUri);
                 req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(JsonMediaType));
@@ -114,7 +114,7 @@ namespace Wildling.Core
             var requestUri = GetReplicaRequestUri(node, key);
 
             Siblings siblings;
-            using (var client = HttpClientFactory.Create())
+            using (var client = new HttpClient())
             {
                 var req = new HttpRequestMessage(HttpMethod.Get, requestUri);
                 req.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(JsonMediaType));

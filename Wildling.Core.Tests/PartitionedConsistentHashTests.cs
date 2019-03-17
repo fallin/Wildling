@@ -32,7 +32,7 @@ namespace Wildling.Core.Tests
 
             var ch = new PartitionedConsistentHash(new[] {"a"});
             var result = ch.Hash("foo");
-            
+
             result.ToString("x").Should().Be("0beec7b5ea3f0fdbc95d0dd47f3c5bc275da8a33");
             result.Should().Be(BigInteger.Parse("68123873083688143418383284816464454849230703155"));
 
@@ -63,7 +63,7 @@ namespace Wildling.Core.Tests
             node.Should().Be("B");
 
             var preferenceList = ch.PreferenceList("foo", 3); // belongs to node A
-            preferenceList.ShouldBeEquivalentTo(new[] { 'B', 'C', 'D' });
+            preferenceList.Should().BeEquivalentTo(new[] { "B", "C", "D" });
         }
     }
 }

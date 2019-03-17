@@ -1,12 +1,10 @@
 using System;
-using System.Dynamic;
 using System.Linq;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Moq;
 using Newtonsoft.Json.Linq;
+using NSubstitute;
 using NUnit.Framework;
-using Wildling.Core.Tests.SupportingTypes;
 
 namespace Wildling.Core.Tests
 {
@@ -17,8 +15,9 @@ namespace Wildling.Core.Tests
         public async Task Put_should_store_value_for_key_when_node_owns_partition()
         {
             var node = new Node("A", new[] { "A", "B", "C" });
-            var remote = new Mock<IRemoteNodeClient>();
-            node.UseRemoteNodeClient(remote.Object);
+
+            var remote = Substitute.For<IRemoteNodeClient>();
+            node.UseRemoteNodeClient(remote);
 
             await node.PutAsync("foo", JObject.Parse("{'value':'bar'}"));
 
@@ -32,11 +31,12 @@ namespace Wildling.Core.Tests
         public async Task Put_should_not_store_value_for_key_when_it_does_not_own_partition()
         {
             var node = new Node("B", new[] { "A", "B", "C" }, 32);
-            var remote = new Mock<IRemoteNodeClient>();
-            node.UseRemoteNodeClient(remote.Object);
+
+            var remote = Substitute.For<IRemoteNodeClient>();
+            node.UseRemoteNodeClient(remote);
 
             await node.PutAsync("foo", JObject.Parse("{'value':'bar'}"));
-            remote.Verify(x => x.PutReplicaAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<Siblings>()));
+            await remote.Received().PutReplicaAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<Siblings>());
         }
 
         //[Test]

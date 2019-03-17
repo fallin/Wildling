@@ -17,7 +17,7 @@ namespace Wildling.Core.Tests.Extensions
             // ReSharper disable once ExpressionIsAlwaysNull
             Action action = () => list.Shift();
 
-            action.ShouldThrow<ArgumentNullException>();
+            action.Should().Throw<ArgumentNullException>();
         }
 
         [Test]

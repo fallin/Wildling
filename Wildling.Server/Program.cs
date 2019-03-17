@@ -8,7 +8,7 @@ namespace Wildling.Server
 {
     class Program
     {
-        static readonly ILog Log = LogManager.GetCurrentClassLogger();
+        static readonly ILog Log = LogManager.GetLogger<Program>();
 
         static int Main(string[] args)
         {
